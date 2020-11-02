@@ -1,0 +1,13 @@
+---
+- name: Install nginx on DO droplets
+  hosts: students
+  become: yes
+  method: sudo
+
+  tasks:
+  - name: Install nginx
+    apt:
+      name: nginx
+      state: present
+      update_cache: yes
+    become: true
