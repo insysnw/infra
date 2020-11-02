@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"github.com/pulumi/pulumi-digitalocean/sdk/v3/go/digitalocean"
 	"github.com/pulumi/pulumi/sdk/v2/go/pulumi"
-	"os"
 	"io/ioutil"
+	"os"
 	"strconv"
 	"strings"
 )
@@ -14,12 +14,15 @@ import (
 func main() {
 	pulumi.Run(func(ctx *pulumi.Context) error {
 
+		region := "fra1"
+
+		// Script to execute on every machine
 		content, err := ioutil.ReadFile("script.sh")
 		if err != nil {
-    	    fmt.Println("Error: ", err)
-    	}
+			fmt.Println("Error: ", err)
+		}
 
-    	installationScript := string(content)
+		installationScript := string(content)
 
 		// read students keys file
 		fStudents, err := os.Open("students.keys")
@@ -84,19 +87,29 @@ func main() {
 			}
 		}
 
+		insysVpc, err := digitalocean.NewVpc(ctx, "insysVpc", &digitalocean.VpcArgs{
+			Region: pulumi.String(region),
+		})
+		if err != nil {
+			fmt.Println("Unable to create VPC")
+			fmt.Println(err)
+			return err
+		}
+
 		// create Droplet for each key
 		for index, key := range StudentsKeys {
 			var SshKeysArray pulumi.StringArray
 			SshKeysArray = append(SshKeysArray, key.Fingerprint)
 			for _, teachersKey := range TeachersKeys {
 				SshKeysArray = append(SshKeysArray, teachersKey.Fingerprint)
-	 		}
+			}
 			_, err := digitalocean.NewDroplet(ctx, "insys"+strconv.Itoa(index), &digitalocean.DropletArgs{
 				Image:    pulumi.String("ubuntu-20-04-x64"),
-				Region:   pulumi.String("fra1"),
+				Region:   pulumi.String(region),
 				Size:     pulumi.String("s-1vcpu-1gb"),
 				SshKeys:  SshKeysArray,
 				UserData: pulumi.String(installationScript),
+				VpcUuid:  insysVpc.ID(),
 			})
 			if err != nil {
 				fmt.Println("Unable to create droplet")
