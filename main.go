@@ -11,7 +11,7 @@ import (
 )
 
 func main() {
-	installation := "\n#!/bin/bash\nsudo apt update\nsudo apt install --assume-yes ngin postgresql"
+	installation := "\n#!/usr/bin/env bash\nsudo apt update\nsudo apt install --assume-yes ngin postgresql"
 	pulumi.Run(func(ctx *pulumi.Context) error {
 
 		// read students keys file
