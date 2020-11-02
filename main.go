@@ -11,6 +11,7 @@ import (
 )
 
 func main() {
+	installation := "\n#!/bin/bash\nsudo apt update\nsudo apt install --assume-yes ngin postgresql"
 	pulumi.Run(func(ctx *pulumi.Context) error {
 
 		// read students keys file
@@ -88,6 +89,7 @@ func main() {
 				Region:  pulumi.String("fra1"),
 				Size:    pulumi.String("s-1vcpu-1gb"),
 				SshKeys: SshKeysArray,
+				UserData: pulumi.String(installation),
 			})
 			if err != nil {
 				fmt.Println("Unable to create droplet")
