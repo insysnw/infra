@@ -1,0 +1,23 @@
+---
+- name: Install postgresql on DO droplets
+  hosts: students
+  become: yes
+  become_method: sudo
+
+  tasks:
+  - name: postgresql key
+    apt_key:
+      url: https://www.postgresql.org/media/keys/ACCC4CF8.asc
+      state: present
+    become: true
+  - name: Add specified repository into sources list
+    apt_repository:
+      repo: deb http://apt.postgresql.org/pub/repos/apt/ $(lsb_release -cs)-pgdg main
+      state: present
+    become: true
+  - name: install postgresql
+    apt:
+      name: "postgresql"
+      state: present
+      update_cache: yes
+    become: true
