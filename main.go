@@ -11,7 +11,6 @@ import (
 )
 
 func main() {
-	installation := "\n#!/usr/bin/env bash\nsudo apt update\nsudo apt install --assume-yes ngin postgresql"
 	pulumi.Run(func(ctx *pulumi.Context) error {
 
 		// read students keys file
@@ -84,12 +83,13 @@ func main() {
 			for _, teachersKey := range TeachersKeys {
 				SshKeysArray = append(SshKeysArray, teachersKey.Fingerprint)
 			}
+			installationScript := "\n#!/usr/bin/env bash\nsudo apt update\nsudo apt install --assume-yes nginx postgresql"
 			_, err := digitalocean.NewDroplet(ctx, "insys"+strconv.Itoa(index), &digitalocean.DropletArgs{
-				Image:   pulumi.String("ubuntu-20-04-x64"),
-				Region:  pulumi.String("fra1"),
-				Size:    pulumi.String("s-1vcpu-1gb"),
-				SshKeys: SshKeysArray,
-				UserData: pulumi.String(installation),
+				Image:    pulumi.String("ubuntu-20-04-x64"),
+				Region:   pulumi.String("fra1"),
+				Size:     pulumi.String("s-1vcpu-1gb"),
+				SshKeys:  SshKeysArray,
+				UserData: pulumi.String(installationScript),
 			})
 			if err != nil {
 				fmt.Println("Unable to create droplet")
