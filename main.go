@@ -81,7 +81,7 @@ func main() {
 		for index, key := range keysToUse {
 			var SshKeysArray pulumi.StringArray
 			SshKeysArray = append(SshKeysArray, key.Fingerprint)
-			_, err = digitalocean.NewDroplet(ctx, "insys"+strconv.Itoa(index), &digitalocean.DropletArgs{
+			_, err := digitalocean.NewDroplet(ctx, "insys"+strconv.Itoa(index), &digitalocean.DropletArgs{
 				Image:   pulumi.String("ubuntu-20-04-x64"),
 				Region:  pulumi.String("fra1"),
 				Size:    pulumi.String("s-1vcpu-1gb"),
@@ -89,7 +89,7 @@ func main() {
 			})
 			if err != nil {
 				fmt.Println("Unable to create droplet")
-				fmt.Println(er)
+				fmt.Println(err)
 			}
 		}
 		return nil
