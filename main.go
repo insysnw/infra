@@ -2,9 +2,7 @@ package main
 
 import (
 	"bufio"
-	"context"
 	"fmt"
-	"github.com/digitalocean/godo"
 	"github.com/pulumi/pulumi-digitalocean/sdk/v3/go/digitalocean"
 	"github.com/pulumi/pulumi/sdk/v2/go/pulumi"
 	"os"
@@ -15,53 +13,24 @@ import (
 func main() {
 	pulumi.Run(func(ctx *pulumi.Context) error {
 
-		f, err := os.Open("authorized_keys")
+		// read students keys file
+		fStudents, err := os.Open("students.keys")
 
 		if err != nil {
 			fmt.Println("Error: ", err)
 		}
 
-		defer f.Close()
+		defer fStudents.Close()
 
-		scanner := bufio.NewScanner(f)
+		scanner := bufio.NewScanner(fStudents)
 
-		pat := "it_should_not_be_here"
-
-		clientx := godo.NewFromToken(pat)
-		ctxx := context.TODO()
-
-		opt := &godo.ListOptions{
-			Page:    1,
-			PerPage: 200,
-		}
-
-		keys, _, er := clientx.Keys.List(ctxx, opt)
-
-		if er != nil {
-			fmt.Println("Unable to retrieve keys")
-			fmt.Println(er)
-		} else {
-			fmt.Println(keys)
-		}
-
-		var keysToUse []*digitalocean.SshKey
+		// create each key
+		var StudentsKeys []*digitalocean.SshKey
 		for scanner.Scan() {
 			pubKey := scanner.Text()
-			for _, key := range keys {
-				if key.PublicKey == pubKey {
-					pulumiKey, err := digitalocean.GetSshKey(ctx, key.Name, pulumi.ID(key.ID), nil)
-					if err != nil {
-						fmt.Println("Unable to retrieve keys")
-						fmt.Println(er)
-					} else {
-						keysToUse = append(keysToUse, pulumiKey)
-						break
-					}
-				}
-			}
 			parsedPubKey := strings.Split(pubKey, " ")
 			keyComment := parsedPubKey[2]
-			name := "insys: " + keyComment
+			name := "insys-key: " + keyComment
 			newKey, err := digitalocean.NewSshKey(ctx, name, &digitalocean.SshKeyArgs{
 				Name:      pulumi.String(name),
 				PublicKey: pulumi.String(pubKey),
@@ -70,17 +39,50 @@ func main() {
 				fmt.Println("Unable to add key for " + keyComment)
 				fmt.Println(err)
 			} else {
-				keysToUse = append(keysToUse, newKey)
+				StudentsKeys = append(StudentsKeys, newKey)
 			}
 		}
+
+		// read teachers keys file
+		fTeachers, err := os.Open("teachers.keys")
+
+		if err != nil {
+			fmt.Println("Error: ", err)
+		}
+
+		defer fTeachers.Close()
+
+		scanner = bufio.NewScanner(fTeachers)
 
 		if err := scanner.Err(); err != nil {
 			fmt.Println("Error: ", err)
 		}
 
-		for index, key := range keysToUse {
+		var TeachersKeys []*digitalocean.SshKey
+		for scanner.Scan() {
+			pubKey := scanner.Text()
+			parsedPubKey := strings.Split(pubKey, " ")
+			keyComment := parsedPubKey[2]
+			name := "insys-key: " + keyComment
+			newKey, err := digitalocean.NewSshKey(ctx, name, &digitalocean.SshKeyArgs{
+				Name:      pulumi.String(name),
+				PublicKey: pulumi.String(pubKey),
+			})
+			if err != nil {
+				fmt.Println("Unable to add key for " + keyComment)
+				fmt.Println(err)
+			} else {
+				TeachersKeys = append(TeachersKeys, newKey)
+			}
+		}
+
+		// create Droplet for each key
+		for index, key := range StudentsKeys {
 			var SshKeysArray pulumi.StringArray
 			SshKeysArray = append(SshKeysArray, key.Fingerprint)
+			for _, teachersKey := range TeachersKeys {
+				SshKeysArray = append(SshKeysArray, teachersKey.Fingerprint)
+			}
 			_, err := digitalocean.NewDroplet(ctx, "insys"+strconv.Itoa(index), &digitalocean.DropletArgs{
 				Image:   pulumi.String("ubuntu-20-04-x64"),
 				Region:  pulumi.String("fra1"),
