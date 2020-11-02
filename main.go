@@ -6,12 +6,20 @@ import (
 	"github.com/pulumi/pulumi-digitalocean/sdk/v3/go/digitalocean"
 	"github.com/pulumi/pulumi/sdk/v2/go/pulumi"
 	"os"
+	"io/ioutil"
 	"strconv"
 	"strings"
 )
 
 func main() {
 	pulumi.Run(func(ctx *pulumi.Context) error {
+
+		content, err := ioutil.ReadFile("script.sh")
+		if err != nil {
+    	    fmt.Println("Error: ", err)
+    	}
+
+    	installationScript := string(content)
 
 		// read students keys file
 		fStudents, err := os.Open("students.keys")
@@ -82,8 +90,7 @@ func main() {
 			SshKeysArray = append(SshKeysArray, key.Fingerprint)
 			for _, teachersKey := range TeachersKeys {
 				SshKeysArray = append(SshKeysArray, teachersKey.Fingerprint)
-			}
-			installationScript := "\n#!/usr/bin/env bash\nsudo apt update\nsudo apt install --assume-yes nginx postgresql"
+	 		}
 			_, err := digitalocean.NewDroplet(ctx, "insys"+strconv.Itoa(index), &digitalocean.DropletArgs{
 				Image:    pulumi.String("ubuntu-20-04-x64"),
 				Region:   pulumi.String("fra1"),
