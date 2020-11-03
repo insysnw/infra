@@ -14,6 +14,8 @@ import (
 func main() {
 	pulumi.Run(func(ctx *pulumi.Context) error {
 
+		studentsKeysFilePath := "../students.keys"
+		teachersKeysFilePath := "../teachers.keys"
 		region := "fra1"
 
 		// Script to execute on every machine
@@ -25,7 +27,7 @@ func main() {
 		installationScript := string(content)
 
 		// read students keys file
-		fStudents, err := os.Open("students.keys")
+		fStudents, err := os.Open(studentsKeysFilePath)
 
 		if err != nil {
 			fmt.Println("Error: ", err)
@@ -55,7 +57,7 @@ func main() {
 		}
 
 		// read teachers keys file
-		fTeachers, err := os.Open("teachers.keys")
+		fTeachers, err := os.Open(teachersKeysFilePath)
 
 		if err != nil {
 			fmt.Println("Error: ", err)
@@ -96,25 +98,40 @@ func main() {
 			return err
 		}
 
-		// create Droplet for each key
+		// generate regular droplet args
+		dropletArgs := digitalocean.DropletArgs{
+			Image:    pulumi.String("ubuntu-20-04-x64"),
+			Region:   pulumi.String(region),
+			Size:     pulumi.String("s-1vcpu-1gb"),
+			UserData: pulumi.String(installationScript),
+			VpcUuid:  insysVpc.ID(),
+		}
+
+		// create Droplet for each students key
 		for index, key := range StudentsKeys {
 			var SshKeysArray pulumi.StringArray
 			SshKeysArray = append(SshKeysArray, key.Fingerprint)
+			dropletArgs.SshKeys = SshKeysArray
 			for _, teachersKey := range TeachersKeys {
 				SshKeysArray = append(SshKeysArray, teachersKey.Fingerprint)
 			}
-			_, err := digitalocean.NewDroplet(ctx, "insys"+strconv.Itoa(index), &digitalocean.DropletArgs{
-				Image:    pulumi.String("ubuntu-20-04-x64"),
-				Region:   pulumi.String(region),
-				Size:     pulumi.String("s-1vcpu-1gb"),
-				SshKeys:  SshKeysArray,
-				UserData: pulumi.String(installationScript),
-				VpcUuid:  insysVpc.ID(),
-			})
+			_, err := digitalocean.NewDroplet(ctx, "insys"+strconv.Itoa(index), &dropletArgs)
 			if err != nil {
 				fmt.Println("Unable to create droplet")
 				fmt.Println(err)
 			}
+		}
+
+		// create one droplet for teachers
+		var SshKeysArray pulumi.StringArray
+		for _, teachersKey := range TeachersKeys {
+			SshKeysArray = append(SshKeysArray, teachersKey.Fingerprint)
+		}
+		dropletArgs.SshKeys = SshKeysArray
+		_, err = digitalocean.NewDroplet(ctx, "insys-lead", &dropletArgs)
+		if err != nil {
+			fmt.Println("Unable to create droplet")
+			fmt.Println(err)
 		}
 		return nil
 	})
