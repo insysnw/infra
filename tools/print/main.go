@@ -13,7 +13,7 @@ import (
 
 func main() {
 	studentsKeysFilePath := "../students.keys"
-	doToken := "thisisakey"
+	doToken := "yeap, it's still harcoded"
 	f, err := os.Open(studentsKeysFilePath)
 
 	if err != nil {
@@ -39,6 +39,7 @@ func main() {
 	droplets, err := DropletList(ctx, client)
 	if err != nil {
 		fmt.Println("Unable to get droplets list")
+		fmt.Println(err)
 	} else {
 		for _, droplet := range droplets {
 			ipv4, err := droplet.PublicIPv4()

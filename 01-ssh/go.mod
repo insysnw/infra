@@ -1,4 +1,4 @@
-module insysnw
+module github.com/insysnw/infra/01-ssh
 
 go 1.14
 
