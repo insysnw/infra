@@ -12,8 +12,8 @@ import (
 )
 
 func main() {
-	studentsKeysFilePath := "../students.keys"
 	doToken := "yeap, it's still harcoded"
+	studentsKeysFilePath := "../../students.keys"
 	f, err := os.Open(studentsKeysFilePath)
 
 	if err != nil {
@@ -41,15 +41,20 @@ func main() {
 		fmt.Println("Unable to get droplets list")
 		fmt.Println(err)
 	} else {
-		for _, droplet := range droplets {
+		for index, droplet := range droplets {
 			ipv4, err := droplet.PublicIPv4()
+			if index >= len(keys) {
+				tbl.AddRow(droplet.Name, " ", ipv4)
+				break
+			}
 			if err != nil {
 				fmt.Println("Failed to get droplets IPv4 address")
 			}
 			preindex := strings.Split(droplet.Name, "-")
-			index, err := strconv.Atoi(strings.TrimPrefix(preindex[0], "insys"))
+			indexStr := strings.TrimPrefix(preindex[0], "insys")
+			index, err := strconv.Atoi(indexStr)
 			if err != nil {
-				fmt.Println("Failed to parse droplet index:\n\tGot \"%s\" instead of a number")
+				fmt.Println("Failed to parse droplet index:\n\tGot \"", indexStr, "\" instead of a number")
 			}
 			tbl.AddRow(droplet.Name, strings.Split(keys[index], " ")[2], ipv4)
 
