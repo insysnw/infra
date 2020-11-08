@@ -6,7 +6,6 @@ import (
 	"github.com/pulumi/pulumi-digitalocean/sdk/v3/go/digitalocean"
 	"github.com/pulumi/pulumi/sdk/v2/go/pulumi"
 	"io/ioutil"
-	"strconv"
 )
 
 func main() {
@@ -57,14 +56,14 @@ func main() {
 		}
 
 		// create Droplet for each students key
-		for index, key := range StudentsKeys {
+		for _, key := range StudentsKeys {
 			var SshKeysArray pulumi.StringArray
-			SshKeysArray = append(SshKeysArray, key.Fingerprint)
+			SshKeysArray = append(SshKeysArray, key.DOKey.Fingerprint)
 			dropletArgs.SshKeys = SshKeysArray
 			for _, teachersKey := range TeachersKeys {
-				SshKeysArray = append(SshKeysArray, teachersKey.Fingerprint)
+				SshKeysArray = append(SshKeysArray, teachersKey.DOKey.Fingerprint)
 			}
-			_, err := digitalocean.NewDroplet(ctx, "insys"+strconv.Itoa(index), &dropletArgs)
+			_, err := digitalocean.NewDroplet(ctx, key.getUsername(), &dropletArgs)
 			if err != nil {
 				fmt.Println("Unable to create droplet")
 				fmt.Println(err)

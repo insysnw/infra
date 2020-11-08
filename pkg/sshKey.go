@@ -13,41 +13,48 @@ type SshKey struct {
 	KeyType   string
 	KeyItself string
 	Comment   string
+	DOKey     *digitalocean.SshKey
 }
 
 func (key SshKey) toString() string {
 	return key.KeyType + " " + key.KeyItself + " " + key.Comment
 }
 
-func (key SshKey) toDO(ctx *pulumi.Context) (*digitalocean.SshKey, error) {
+func (key SshKey) getUsername() string {
+	return strings.Split(key.Comment, "@")[0]
+}
+
+func (key SshKey) initDO(ctx *pulumi.Context) error {
 	name := "insys-key: " + key.Comment
-	newKey, err := digitalocean.NewSshKey(ctx, name, &digitalocean.SshKeyArgs{
+	doKey, err := digitalocean.NewSshKey(ctx, name, &digitalocean.SshKeyArgs{
 		Name:      pulumi.String(name),
 		PublicKey: pulumi.String(key.toString()),
 	})
 	if err != nil {
-		return newKey, err
+		return err
 	}
-	return newKey, nil
+	key.DOKey = doKey
+	return nil
 }
 
-func GetKeys(ctx *pulumi.Context, keysFilePath string) ([]*digitalocean.SshKey, error) {
-	var Keys []*digitalocean.SshKey
+func GetKeys(ctx *pulumi.Context, keysFilePath string) ([]SshKey, error) {
+	//keys with DO part instantiated
+	var keys []SshKey
 
 	localKeys, err := ReadKeys(keysFilePath)
 	if err != nil {
-		return Keys, err
+		return keys, err
 	}
 
 	for _, localKey := range localKeys {
-		newKey, err := localKey.toDO(ctx)
+		err := localKey.initDO(ctx)
 		if err != nil {
-			return Keys, err
+			return keys, err
 		} else {
-			Keys = append(Keys, newKey)
+			keys = append(keys, localKey)
 		}
 	}
-	return Keys, nil
+	return keys, nil
 }
 
 func ReadKeys(keysFilePath string) ([]SshKey, error) {
