@@ -25,14 +25,14 @@ func main() {
 		installationScript := string(content)
 
 		// read students keys file
-		StudentsKeys, err := GetKeys(ctx, studentsKeysFilePath)
+		StudentsKeys, err := pkg.GetKeys(ctx, studentsKeysFilePath)
 		if err != nil {
 			fmt.Println("Unable to read keys from " + studentsKeysFilePath)
 			fmt.Println(err)
 		}
 
 		// read teachers keys file
-		TeachersKeys, err := GetKeys(ctx, teachersKeysFilePath)
+		TeachersKeys, err := pkg.GetKeys(ctx, teachersKeysFilePath)
 		if err != nil {
 			fmt.Println("Unable to read keys from " + teachersKeysFilePath)
 			fmt.Println(err)
