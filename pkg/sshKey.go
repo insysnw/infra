@@ -24,7 +24,7 @@ func (key SshKey) GetUsername() string {
 	return strings.Split(key.Comment, "@")[0]
 }
 
-func (key SshKey) initDO(ctx *pulumi.Context) error {
+func (key *SshKey) initDO(ctx *pulumi.Context) error {
 	name := "insys-key: " + key.Comment
 	doKey, err := digitalocean.NewSshKey(ctx, name, &digitalocean.SshKeyArgs{
 		Name:      pulumi.String(name),
