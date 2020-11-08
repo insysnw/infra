@@ -16,7 +16,7 @@ type SshKey struct {
 	DOKey     *digitalocean.SshKey
 }
 
-func (key SshKey) ToString() string {
+func (key SshKey) toString() string {
 	return key.KeyType + " " + key.KeyItself + " " + key.Comment
 }
 
@@ -41,7 +41,7 @@ func GetKeys(ctx *pulumi.Context, keysFilePath string) ([]SshKey, error) {
 	//keys with DO part instantiated
 	var keys []SshKey
 
-	localKeys, err := ReadKeys(keysFilePath)
+	localKeys, err := readKeys(keysFilePath)
 	if err != nil {
 		return keys, err
 	}
