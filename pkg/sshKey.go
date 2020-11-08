@@ -16,11 +16,11 @@ type SshKey struct {
 	DOKey     *digitalocean.SshKey
 }
 
-func (key SshKey) toString() string {
+func (key SshKey) ToString() string {
 	return key.KeyType + " " + key.KeyItself + " " + key.Comment
 }
 
-func (key SshKey) getUsername() string {
+func (key SshKey) GetUsername() string {
 	return strings.Split(key.Comment, "@")[0]
 }
 
@@ -57,7 +57,7 @@ func GetKeys(ctx *pulumi.Context, keysFilePath string) ([]SshKey, error) {
 	return keys, nil
 }
 
-func ReadKeys(keysFilePath string) ([]SshKey, error) {
+func readKeys(keysFilePath string) ([]SshKey, error) {
 	f, err := os.Open(keysFilePath)
 
 	if err != nil {

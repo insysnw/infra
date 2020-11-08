@@ -63,7 +63,7 @@ func main() {
 			for _, teachersKey := range TeachersKeys {
 				SshKeysArray = append(SshKeysArray, teachersKey.DOKey.Fingerprint)
 			}
-			_, err := digitalocean.NewDroplet(ctx, key.getUsername(), &dropletArgs)
+			_, err := digitalocean.NewDroplet(ctx, key.GetUsername(), &dropletArgs)
 			if err != nil {
 				fmt.Println("Unable to create droplet")
 				fmt.Println(err)
@@ -73,7 +73,7 @@ func main() {
 		// create one droplet for teachers
 		var SshKeysArray pulumi.StringArray
 		for _, teachersKey := range TeachersKeys {
-			SshKeysArray = append(SshKeysArray, teachersKey.Fingerprint)
+			SshKeysArray = append(SshKeysArray, teachersKey.DOKey.Fingerprint)
 		}
 		dropletArgs.SshKeys = SshKeysArray
 		_, err = digitalocean.NewDroplet(ctx, "insys-lead", &dropletArgs)
