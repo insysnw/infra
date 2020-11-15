@@ -7,7 +7,6 @@ import (
 	"github.com/digitalocean/godo"
 	"github.com/rodaine/table"
 	"os"
-	"strconv"
 	"strings"
 )
 
@@ -34,30 +33,22 @@ func main() {
 	ctx := context.TODO()
 
 	// create table to fill
-	tbl := table.New("Droplet", "Student", "IPv4")
+	tbl := table.New("Droplet", "IPv4")
 
 	droplets, err := DropletList(ctx, client)
 	if err != nil {
 		fmt.Println("Unable to get droplets list")
 		fmt.Println(err)
 	} else {
-		for index, droplet := range droplets {
-			ipv4, err := droplet.PublicIPv4()
-			if index >= len(keys) {
-				tbl.AddRow(droplet.Name, " ", ipv4)
-				break
-			}
-			if err != nil {
-				fmt.Println("Failed to get droplets IPv4 address")
-			}
-			preindex := strings.Split(droplet.Name, "-")
-			indexStr := strings.TrimPrefix(preindex[0], "insys")
-			index, err := strconv.Atoi(indexStr)
-			if err != nil {
-				fmt.Println("Failed to parse droplet index:\n\tGot \"", indexStr, "\" instead of a number")
-			}
-			tbl.AddRow(droplet.Name, strings.Split(keys[index], " ")[2], ipv4)
+		for _, droplet := range droplets {
+			if strings.Contains(droplet.Name, "insys") {
+				ipv4, err := droplet.PublicIPv4()
+				if err != nil {
+					fmt.Println("Failed to get droplets IPv4 address")
+				}
+				tbl.AddRow(droplet.Name, ipv4)
 
+			}
 		}
 		tbl.Print()
 	}

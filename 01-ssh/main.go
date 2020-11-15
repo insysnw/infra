@@ -63,7 +63,7 @@ func main() {
 			for _, teachersKey := range TeachersKeys {
 				SshKeysArray = append(SshKeysArray, teachersKey.DOKey.Fingerprint)
 			}
-			_, err := digitalocean.NewDroplet(ctx, key.GetUsername(), &dropletArgs)
+			_, err := digitalocean.NewDroplet(ctx, "insys-"+key.GetUsername(), &dropletArgs)
 			if err != nil {
 				fmt.Println("Unable to create droplet")
 				fmt.Println(err)
