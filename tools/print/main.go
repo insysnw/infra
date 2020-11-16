@@ -5,11 +5,12 @@ import (
 	"fmt"
 	"github.com/digitalocean/godo"
 	"github.com/rodaine/table"
+	"os"
 	"strings"
 )
 
 func main() {
-	doToken := "adec30ae223bb1f073e2395471ba7eac8c824ac32bb2d4395b9f444a107420ce"
+	doToken := os.Getenv("DO_TOKEN")
 
 	client := godo.NewFromToken(doToken)
 	ctx := context.TODO()
@@ -24,12 +25,19 @@ func main() {
 	} else {
 		for _, droplet := range droplets {
 			if strings.Contains(droplet.Name, "insys") {
-				ipv4, err := droplet.PublicIPv4()
-				if err != nil {
-					fmt.Println("Failed to get droplets IPv4 address")
+				if strings.Contains(droplet.Name, "internal") {
+					ipv4, err := droplet.PrivateIPv4()
+					if err != nil {
+						fmt.Println("Failed to get droplets IPv4 address")
+					}
+					tbl.AddRow(droplet.Name, ipv4)
+				} else {
+					ipv4, err := droplet.PublicIPv4()
+					if err != nil {
+						fmt.Println("Failed to get droplets IPv4 address")
+					}
+					tbl.AddRow(droplet.Name, ipv4)
 				}
-				tbl.AddRow(droplet.Name, ipv4)
-
 			}
 		}
 		tbl.Print()
