@@ -1,33 +1,15 @@
 package main
 
 import (
-	"bufio"
 	"context"
 	"fmt"
 	"github.com/digitalocean/godo"
 	"github.com/rodaine/table"
-	"os"
 	"strings"
 )
 
 func main() {
-	doToken := "yeap, it's still harcoded"
-	studentsKeysFilePath := "../../students.keys"
-	f, err := os.Open(studentsKeysFilePath)
-
-	if err != nil {
-		fmt.Println("Error: ", err)
-	}
-
-	defer f.Close()
-
-	var keys []string
-	scanner := bufio.NewScanner(f)
-
-	for scanner.Scan() {
-		pubKey := scanner.Text()
-		keys = append(keys, pubKey)
-	}
+	doToken := "adec30ae223bb1f073e2395471ba7eac8c824ac32bb2d4395b9f444a107420ce"
 
 	client := godo.NewFromToken(doToken)
 	ctx := context.TODO()
