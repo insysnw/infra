@@ -2,6 +2,7 @@ import * as pulumi from "@pulumi/pulumi";
 import * as linode from "@pulumi/linode";
 import { readFileSync } from 'fs';
 
+
 export type Instance = {
   name: pulumi.Output<string>;
   ip: pulumi.Output<string>;
@@ -55,6 +56,20 @@ keys.forEach(function (key) {
   instances.push(instance_output);
 });
 
+const tutorsInstance = new linode.Instance("tutors", {
+    authorizedUsers: config.getObject("tutors"),
+    label: "tutors",
+    privateIp: true,
+    type: "g6-nanode-1",
+    region: "eu-central",
+    image: "linode/ubuntu20.04",
+    stackscriptId: nginxStackScript.id.apply(parseInt),
+    stackscriptData: {
+        "package": "nginx",
+    },
+}, { deleteBeforeReplace: true });
+
+export const tutorsIP = tutorsInstance.ipAddress;
 
 const privateInstance = new linode.Instance("private", {
     authorizedKeys: keys,
@@ -70,7 +85,15 @@ const privateInstance = new linode.Instance("private", {
     },
 }, { deleteBeforeReplace: true });
 
-const myFirewall = new linode.Firewall("turnPrivate", {
+var netmask = require('netmask');
+const internalBlock = new netmask.Netmask('192.168.128.0/17');
+
+function isPrivate(ip: string) {
+    return internalBlock.contains(ip);
+}
+export const privateIP = privateInstance.ipv4s.apply(ips => ips.filter(isPrivate));
+
+new linode.Firewall("turnPrivate", {
     label: "turnPrivate",
     tags: ["kek"],
     inbounds: [
