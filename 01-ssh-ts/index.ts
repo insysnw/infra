@@ -9,7 +9,22 @@ export type Instance = {
 
 export let instances: Instance[] = [];
 
+const nginxStackScript = new linode.StackScript("nginxStackScript", {
+    label: "nginx",
+    description: "Installs an NGINX Package",
+    script: `#!/bin/bash
+# <UDF name="package" label="System Package to Install" example="nginx" default="">
+apt-get -q update && apt-get -q -y install $PACKAGE
+`,
+    images: [
+        "linode/ubuntu20.04",
+    ],
+    revNote: "initial version",
+});
+
 const keys = readFileSync('../../keys/2021h2/authorized_keys.'.concat(pulumi.getStack()), 'utf-8');
+
+let config = new pulumi.Config();
 
 keys.split('\n').forEach(function (key) {
   if ( key != '' ) {
@@ -18,11 +33,17 @@ keys.split('\n').forEach(function (key) {
     // Create a Linode resource (Linode Instance)
     const instance = new linode.Instance(student, {
         authorizedKeys: [key],
+        authorizedUsers: config.getObject("tutors"),
         label: student,
+        privateIp: true,
         type: "g6-nanode-1",
         region: "eu-central",
         image: "linode/ubuntu20.04",
-    });
+        stackscriptId: nginxStackScript.id.apply(parseInt),
+        stackscriptData: {
+            "package": "nginx",
+        },
+    }, { deleteBeforeReplace: true });
 
     const instance_output: Instance = {
       name: instance.label,

@@ -1,3 +1,4 @@
 config:
+  01-ssh:tutors: ["ejiek","zorin"]
   linode:token:
     secure: AAABAFgRp2LpAbLPagY6CI+C2tFt246zIS870dfckJRAqeFrLPTlOkX6LGZrLI7OMJ17q+z5Jz5B/65xSlHiphJhXG3a0vkrq1xFu6iY+557tgaxrfplmZwlN+TsTExC
