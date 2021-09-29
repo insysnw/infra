@@ -22,33 +22,67 @@ apt-get -q update && apt-get -q -y install $PACKAGE
     revNote: "initial version",
 });
 
-const keys = readFileSync('../../keys/2021h2/authorized_keys.'.concat(pulumi.getStack()), 'utf-8');
+function isNotEmpty(str: string) {
+    return str.length > 0;
+}
+
+const keys = readFileSync('../../keys/2021h2/authorized_keys.'.concat(pulumi.getStack()), 'utf-8').split('\n').filter(isNotEmpty);
 
 let config = new pulumi.Config();
 
-keys.split('\n').forEach(function (key) {
-  if ( key != '' ) {
-    const student = key.split(' ')[2].split('@')[0];
+keys.forEach(function (key) {
+  const student = key.split(' ')[2].split('@')[0];
 
-    // Create a Linode resource (Linode Instance)
-    const instance = new linode.Instance(student, {
-        authorizedKeys: [key],
-        authorizedUsers: config.getObject("tutors"),
-        label: student,
-        privateIp: true,
-        type: "g6-nanode-1",
-        region: "eu-central",
-        image: "linode/ubuntu20.04",
-        stackscriptId: nginxStackScript.id.apply(parseInt),
-        stackscriptData: {
-            "package": "nginx",
+  // Create a Linode resource (Linode Instance)
+  const instance = new linode.Instance(student, {
+      authorizedKeys: [key],
+      authorizedUsers: config.getObject("tutors"),
+      label: student,
+      privateIp: true,
+      type: "g6-nanode-1",
+      region: "eu-central",
+      image: "linode/ubuntu20.04",
+      stackscriptId: nginxStackScript.id.apply(parseInt),
+      stackscriptData: {
+          "package": "nginx",
+      },
+  }, { deleteBeforeReplace: true });
+
+  const instance_output: Instance = {
+    name: instance.label,
+    ip: instance.ipAddress,
+  };
+  instances.push(instance_output);
+});
+
+
+const privateInstance = new linode.Instance("private", {
+    authorizedKeys: keys,
+    authorizedUsers: config.getObject("tutors"),
+    label: "private",
+    privateIp: true,
+    type: "g6-nanode-1",
+    region: "eu-central",
+    image: "linode/ubuntu20.04",
+    stackscriptId: nginxStackScript.id.apply(parseInt),
+    stackscriptData: {
+        "package": "nginx",
+    },
+}, { deleteBeforeReplace: true });
+
+const myFirewall = new linode.Firewall("turnPrivate", {
+    label: "turnPrivate",
+    tags: ["kek"],
+    inbounds: [
+        {
+            label: "allow-internal",
+            action: "ACCEPT",
+            protocol: "TCP",
+            ports: "1-65535",
+            ipv4s: ["192.168.128.0/17"],
         },
-    }, { deleteBeforeReplace: true });
-
-    const instance_output: Instance = {
-      name: instance.label,
-      ip: instance.ipAddress,
-    };
-    instances.push(instance_output);
-  }
-})
+    ],
+    inboundPolicy: "DROP",
+    outboundPolicy: "ACCEPT",
+    linodes: [privateInstance.id.apply(parseInt)],
+});
