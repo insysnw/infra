@@ -9,26 +9,25 @@ export type Instance = {
 
 export let instances: Instance[] = [];
 
-const keys = fs.readFileSync('../../keys/2021h2/authorized_keys.'.concat(pulumi.getStack()), 'utf-8'):
+const keys = readFileSync('../../keys/2021h2/authorized_keys.'.concat(pulumi.getStack()), 'utf-8');
 
-keys.split(/[\r\n]+/).forEach(function (line) {
-  student = line.split(/[\t\ ]+/)[2].split('@')[0];
-  new SshKey(name: student, args: {label: student, sshKey: line});
+keys.split('\n').forEach(function (key) {
+  if ( key != '' ) {
+    const student = key.split(' ')[2].split('@')[0];
 
-  // Create a Linode resource (Linode Instance)
-  const instance = new linode.Instance(student, {
-      type: "g6-nanode-1",
-      region: "eu-central",
-      image: "linode/ubuntu20.04",
-  });
+    // Create a Linode resource (Linode Instance)
+    const instance = new linode.Instance(student, {
+        authorizedKeys: [key],
+        label: student,
+        type: "g6-nanode-1",
+        region: "eu-central",
+        image: "linode/ubuntu20.04",
+    });
 
-  const instance_output: Instance = {
-    name: instance.
-    ipv4: instance.
-  };
-  instances.push(instance_output);
+    const instance_output: Instance = {
+      name: instance.label,
+      ip: instance.ipAddress,
+    };
+    instances.push(instance_output);
+  }
 })
-
-
-
-export const instanceLabel = instance.label;
